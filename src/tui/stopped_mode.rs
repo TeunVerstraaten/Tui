@@ -1,6 +1,7 @@
 use crate::tui::{
     app::App,
     app_mode::{AppMode, ContinuationResult},
+    blit::blit_by_scale,
     glyphs::chars::NUMS,
     paused_mode::PausedMode,
 };
@@ -49,46 +50,15 @@ impl StoppedMode {
             _ => ContinuationResult::Noop,
         }
     }
-
-    fn blit_by_scale(
-        c: &[&str],
-        (left, bottom): (u16, u16),
-        scale: u16,
-        area: Rect,
-        buf: &mut Buffer,
-    ) {
-        let fg = Color::LightMagenta;
-        let mut bottom = bottom;
-        for row in c.iter() {
-            let mut left = left;
-
-            for c in row.chars() {
-                match c {
-                    ' ' => (),
-                    c => {
-                        for i_ in left..(left + scale).min(area.width - 1) {
-                            for j_ in bottom..(bottom + scale).min(area.height - 1) {
-                                buf[(i_, j_)].set_char(c).set_fg(fg);
-                            }
-                        }
-                    }
-                }
-
-                left += scale;
-            }
-            bottom += scale;
-        }
-    }
 }
 
 impl AppMode for StoppedMode {
     fn render(&self, area: Rect, buf: &mut Buffer) {
-        let scale: u16 = 2;
+        let scale: u16 = 3;
         let mut left = 4;
-
-        for i in 0..=9 {
-            Self::blit_by_scale(NUMS[i], (left, 4), scale, area, buf);
-            left += scale * (1 + NUMS[i][0].chars().count() as u16);
+        for num in NUMS {
+            blit_by_scale(num, (left, 4), scale, area, buf, Color::LightCyan);
+            left += scale * (1 + num[0].chars().count() as u16);
         }
 
         let title = Line::from(" Stopped ".bold());
