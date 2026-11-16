@@ -1,15 +1,13 @@
-#[derive(Debug, Default)]
-pub enum AppMode {
-    Running,
-    #[default]
-    Paused,
+use std::io;
+
+use ratatui::{buffer::Buffer, layout::Rect};
+
+pub enum HandleEventResult {
+    Ok,
+    Exit,
 }
 
-impl AppMode {
-    pub(crate) fn instructions(&self) -> Vec<(&str, &str)> {
-        match self {
-            Self::Running => vec![],
-            Self::Paused => vec![("Play", "Space"), ("Reload", "r")],
-        }
-    }
+pub trait AppMode {
+    fn render(&self, area: Rect, buf: &mut Buffer);
+    fn handle_events(&mut self) -> io::Result<HandleEventResult>;
 }
