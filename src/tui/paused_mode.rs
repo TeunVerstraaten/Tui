@@ -1,5 +1,8 @@
-use std::time::Instant;
-
+use crate::tui::{
+    app::App,
+    app_mode::{AppMode, ContinuationResult},
+    stopped_mode::StoppedMode,
+};
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
@@ -9,40 +12,34 @@ use ratatui::{
     text::{Line, Text},
     widgets::{Block, Paragraph, Widget},
 };
-
-use crate::tui::{
-    app::App,
-    app_mode::{AppMode, ContinuationResult},
-    stopped_mode::StoppedMode,
-};
+use std::time::Instant;
 
 #[derive(Debug)]
 pub struct PausedMode {
-    start: Instant,
+    _start: Instant,
 }
 
 impl Default for PausedMode {
     fn default() -> Self {
         Self {
-            start: Instant::now(),
+            _start: Instant::now(),
         }
     }
 }
 
 impl PausedMode {
     fn instructions(&self) -> Line<'_> {
-        let instructions = Line::from(vec![
+        Line::from(vec![
             " Stop ".into(),
             "<Esc>".blue().bold(),
             " Quit ".into(),
-            "<Q> ".blue().bold(),
-        ]);
-        Line::from_iter(instructions)
+            "<q> ".blue().bold(),
+        ])
     }
 
     pub(crate) fn handle_key_event(&mut self, key_event: KeyEvent) -> ContinuationResult {
         match key_event.code {
-            KeyCode::Char('q') => ContinuationResult::Exit,
+            KeyCode::Char('q') | KeyCode::Char('Q') => ContinuationResult::Exit,
             KeyCode::Esc => ContinuationResult::ChangeMode {
                 updated: App::Stopped {
                     mode: StoppedMode::default(),

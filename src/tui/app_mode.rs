@@ -1,8 +1,6 @@
-use std::io;
-
-use ratatui::{buffer::Buffer, layout::Rect};
-
 use crate::tui::app::App;
+use ratatui::{buffer::Buffer, layout::Rect};
+use std::io;
 
 pub enum ContinuationResult {
     Noop,

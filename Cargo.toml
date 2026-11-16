@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 color-eyre = "0.6.5"
 crossterm = "0.29.0"
+palette = "0.7.7"
 ratatui = "0.30.2"
 
 [profile.release]

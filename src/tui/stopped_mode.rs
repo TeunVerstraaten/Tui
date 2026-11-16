@@ -1,48 +1,46 @@
-use std::time::Instant;
-
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
-use ratatui::{
-    buffer::Buffer,
-    layout::Rect,
-    style::Stylize,
-    symbols::border,
-    text::{Line, Text},
-    widgets::{Block, Paragraph, Widget},
-};
-
 use crate::tui::{
     app::App,
     app_mode::{AppMode, ContinuationResult},
     paused_mode::PausedMode,
 };
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use palette::{IntoColor, Okhsv, Srgb};
+use ratatui::{
+    buffer::Buffer,
+    layout::Rect,
+    style::{Color, Stylize},
+    symbols::border,
+    text::{Line, Text},
+    widgets::{Block, Paragraph, Widget},
+};
+use std::time::Instant;
 
 #[derive(Debug)]
 pub struct StoppedMode {
-    start: Instant,
+    _start: Instant,
 }
 
 impl Default for StoppedMode {
     fn default() -> Self {
         Self {
-            start: Instant::now(),
+            _start: Instant::now(),
         }
     }
 }
 
 impl StoppedMode {
     fn instructions(&self) -> Line<'_> {
-        let instructions = Line::from(vec![
+        Line::from(vec![
             " Start ".into(),
             "<Space>".blue().bold(),
             " Quit ".into(),
-            "<Q> ".blue().bold(),
-        ]);
-        Line::from_iter(instructions)
+            "<q> ".blue().bold(),
+        ])
     }
 
     pub(crate) fn handle_key_event(&mut self, key_event: KeyEvent) -> ContinuationResult {
         match key_event.code {
-            KeyCode::Char('q') => ContinuationResult::Exit,
+            KeyCode::Char('q') | KeyCode::Char('Q') => ContinuationResult::Exit,
             KeyCode::Char(' ') => ContinuationResult::ChangeMode {
                 updated: App::Paused {
                     mode: PausedMode::default(),
@@ -53,10 +51,25 @@ impl StoppedMode {
     }
 }
 
+fn color_from_oklab(hue: f32, saturation: f32, value: f32) -> Color {
+    let color: Srgb = Okhsv::new(hue, saturation, value).into_color();
+    let color = color.into_format();
+    Color::Rgb(color.red, color.green, color.blue)
+}
+
 impl AppMode for StoppedMode {
     fn render(&self, area: Rect, buf: &mut Buffer) {
-        let title = Line::from(" Stopped ".bold());
+        for (yi, y) in (area.top()..area.bottom()).enumerate() {
+            let value = f32::from(area.height) - yi as f32;
+            let value_fg = value / f32::from(area.height);
+            for (xi, x) in (area.left()..area.right()).enumerate() {
+                let hue = xi as f32 * 360.0 / f32::from(area.width);
+                let fg = color_from_oklab(hue, Okhsv::max_saturation(), value_fg);
+                buf[(x, y)].set_char('█').set_fg(fg);
+            }
+        }
 
+        let title = Line::from(" Stopped ".bold());
         let instructions = self.instructions();
         let block = Block::bordered()
             .title(title.centered())
