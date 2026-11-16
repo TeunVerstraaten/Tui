@@ -1,11 +1,10 @@
 use crate::tui::{
     app::App,
     app_mode::{AppMode, ContinuationResult},
-    glyphs::chars::{NUMS, ONE, TWO, ZERO},
+    glyphs::chars::NUMS,
     paused_mode::PausedMode,
 };
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
-use palette::{IntoColor, Okhsv, Srgb};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
