@@ -1,7 +1,7 @@
 use crate::tui::{
     app::App,
     app_mode::{AppMode, ContinuationResult},
-    glyphs::chars::{ONE, TWO},
+    glyphs::chars::{NUMS, ONE, TWO, ZERO},
     paused_mode::PausedMode,
 };
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
@@ -51,51 +51,6 @@ impl StoppedMode {
         }
     }
 
-    fn blit_by_ranges(
-        c: &[&str],
-        x_range: std::ops::Range<u16>,
-        y_range: std::ops::Range<u16>,
-        area: Rect,
-        buf: &mut Buffer,
-    ) {
-        let c_w = c[0].len() as u16;
-        let c_h = c.len() as u16;
-
-        let x_len = x_range.len();
-        let y_len = y_range.len();
-
-        let is_pixel_on = |i: u16, j: u16| {
-            let i: f64 = (c_w * i) as f64 / ((x_len + 1) as f64);
-            let j: f64 = (c_h * j) as f64 / ((y_len + 1) as f64);
-
-            let i = (i.floor() as usize).min(c_w as usize - 1);
-            let j = (j.floor() as usize).min(c_h as usize - 1);
-
-            return c[j].as_bytes()[i] != b' ';
-        };
-
-        let x = x_range.start;
-        let y = y_range.start;
-
-        for i in x_range {
-            for j in y_range.clone() {
-                let pts = [(i, j), (i + 1, j), (i, j + 1), (i + 1, j + 1)];
-
-                let count = pts
-                    .into_iter()
-                    .filter(|(i, j)| is_pixel_on(i - x, j - y))
-                    .count();
-                if (count < 1) {
-                    continue;
-                }
-
-                let fg = Color::LightYellow;
-
-                buf[(i, j)].set_char('█').set_fg(fg);
-            }
-        }
-    }
-
     fn blit_by_scale(
         c: &[&str],
         (left, bottom): (u16, u16),
@@ -103,7 +58,7 @@ impl StoppedMode {
         area: Rect,
         buf: &mut Buffer,
     ) {
-        let fg = Color::LightYellow;
+        let fg = Color::LightMagenta;
         let mut bottom = bottom;
         for row in c.iter() {
             let mut left = left;
@@ -129,7 +84,13 @@ impl StoppedMode {
 
 impl AppMode for StoppedMode {
     fn render(&self, area: Rect, buf: &mut Buffer) {
-        Self::blit_by_scale(TWO, (4, 4), 2, area, buf);
+        let scale: u16 = 2;
+        let mut left = 4;
+
+        for i in 0..=9 {
+            Self::blit_by_scale(NUMS[i], (left, 4), scale, area, buf);
+            left += scale * (1 + NUMS[i][0].chars().count() as u16);
+        }
 
         let title = Line::from(" Stopped ".bold());
         let instructions = self.instructions();
