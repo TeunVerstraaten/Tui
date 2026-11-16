@@ -10,26 +10,30 @@ use ratatui::{
     widgets::{Block, Paragraph, Widget},
 };
 
-use crate::tui::app_mode::{AppMode, ContinuationResult};
+use crate::tui::{
+    app::App,
+    app_mode::{AppMode, ContinuationResult},
+    stopped_mode::StoppedMode,
+};
 
 #[derive(Debug)]
 pub struct PausedMode {
     start: Instant,
 }
 
-impl PausedMode {
-    pub fn new() -> Self {
+impl Default for PausedMode {
+    fn default() -> Self {
         Self {
             start: Instant::now(),
         }
     }
+}
 
+impl PausedMode {
     fn instructions(&self) -> Line<'_> {
         let instructions = Line::from(vec![
-            " Decrement ".into(),
-            "<Left>".blue().bold(),
-            " Increment ".into(),
-            "<Right>".blue().bold(),
+            " Stop ".into(),
+            "<Esc>".blue().bold(),
             " Quit ".into(),
             "<Q> ".blue().bold(),
         ]);
@@ -39,14 +43,19 @@ impl PausedMode {
     pub(crate) fn handle_key_event(&mut self, key_event: KeyEvent) -> ContinuationResult {
         match key_event.code {
             KeyCode::Char('q') => ContinuationResult::Exit,
-            _ => ContinuationResult::Ok,
+            KeyCode::Esc => ContinuationResult::ChangeMode {
+                updated: App::Stopped {
+                    mode: StoppedMode::default(),
+                },
+            },
+            _ => ContinuationResult::Noop,
         }
     }
 }
 
 impl AppMode for PausedMode {
     fn render(&self, area: Rect, buf: &mut Buffer) {
-        let title = Line::from(" Counter App Tutorial ".bold());
+        let title = Line::from(" Paused ".bold());
 
         let instructions = self.instructions();
         let block = Block::bordered()
@@ -63,12 +72,15 @@ impl AppMode for PausedMode {
     }
 
     fn handle_events(&mut self) -> std::io::Result<ContinuationResult> {
-        let handle_event_return = match event::read()? {
+        Ok(match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
                 self.handle_key_event(key_event)
             }
-            _ => ContinuationResult::Ok,
-        };
-        Ok(handle_event_return)
+            _ => ContinuationResult::Noop,
+        })
+    }
+
+    fn on_tick(&self) -> ContinuationResult {
+        ContinuationResult::Noop
     }
 }

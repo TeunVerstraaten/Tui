@@ -9,24 +9,52 @@ use ratatui::{DefaultTerminal, Frame, buffer::Buffer, layout::Rect, widgets::Wid
 use crate::tui::{
     app_mode::{AppMode, ContinuationResult},
     paused_mode::PausedMode,
+    stopped_mode::StoppedMode,
 };
 
 #[derive(Debug)]
 pub enum App {
+    Stopped { mode: StoppedMode },
     Paused { mode: PausedMode },
 }
 
 impl Default for App {
     fn default() -> Self {
-        App::Paused {
-            mode: PausedMode::new(),
+        App::Stopped {
+            mode: StoppedMode::default(),
         }
     }
 }
 
+pub struct RunningMode {
+    running: bool,
+}
+
 impl App {
-    fn on_tick(&self) -> ContinuationResult {
-        ContinuationResult::Ok
+    fn handle_continuation_result(
+        &mut self,
+        continuation_result: ContinuationResult,
+    ) -> RunningMode {
+        match continuation_result {
+            ContinuationResult::Noop => (),
+            ContinuationResult::ChangeMode { updated } => *self = updated,
+            ContinuationResult::Exit => return RunningMode { running: false },
+        };
+        RunningMode { running: true }
+    }
+
+    fn on_tick(&mut self) -> ContinuationResult {
+        match self {
+            App::Paused { mode } => mode.on_tick(),
+            App::Stopped { mode } => mode.on_tick(),
+        }
+    }
+
+    fn handle_event(&mut self) -> std::io::Result<ContinuationResult> {
+        Ok(match self {
+            App::Paused { mode } => mode.handle_events()?,
+            App::Stopped { mode } => mode.handle_events()?,
+        })
     }
 
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
@@ -36,23 +64,17 @@ impl App {
             terminal.draw(|frame| self.draw(frame))?;
 
             let timeout = tick_rate.saturating_sub(last_tick.elapsed());
-            if !event::poll(timeout)? {
-                let tick_result = self.on_tick();
-                match tick_result {
-                    ContinuationResult::Ok => continue,
-                    ContinuationResult::Exit => break,
-                }
-
+            let continuation_result = if !event::poll(timeout)? {
+                let continuation_result = self.on_tick();
                 last_tick = Instant::now();
-                continue;
-            }
-            let event_result = match self {
-                App::Paused { mode } => mode.handle_events()?,
+                self.handle_continuation_result(continuation_result)
+            } else {
+                let continuation_result = self.handle_event()?;
+                self.handle_continuation_result(continuation_result)
             };
 
-            match event_result {
-                ContinuationResult::Ok => continue,
-                ContinuationResult::Exit => break,
+            if !continuation_result.running {
+                break;
             }
         }
 
@@ -68,6 +90,7 @@ impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
         match self {
             App::Paused { mode } => mode.render(area, buf),
+            App::Stopped { mode } => mode.render(area, buf),
         }
     }
 }
