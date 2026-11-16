@@ -1,8 +1,15 @@
-use std::io;
+use std::{
+    io,
+    time::{Duration, Instant},
+};
 
+use crossterm::event;
 use ratatui::{DefaultTerminal, Frame, buffer::Buffer, layout::Rect, widgets::Widget};
 
-use crate::tui::{app_mode::AppMode, paused_mode::PausedMode};
+use crate::tui::{
+    app_mode::{AppMode, ContinuationResult},
+    paused_mode::PausedMode,
+};
 
 #[derive(Debug)]
 pub enum App {
@@ -12,25 +19,43 @@ pub enum App {
 impl Default for App {
     fn default() -> Self {
         App::Paused {
-            mode: PausedMode::default(),
+            mode: PausedMode::new(),
         }
     }
 }
 
 impl App {
+    fn on_tick(&self) -> ContinuationResult {
+        ContinuationResult::Ok
+    }
+
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
+        let tick_rate = Duration::from_millis(10);
+        let mut last_tick = Instant::now();
         loop {
             terminal.draw(|frame| self.draw(frame))?;
 
-            let handle_event_result = match self {
+            let timeout = tick_rate.saturating_sub(last_tick.elapsed());
+            if !event::poll(timeout)? {
+                let tick_result = self.on_tick();
+                match tick_result {
+                    ContinuationResult::Ok => continue,
+                    ContinuationResult::Exit => break,
+                }
+
+                last_tick = Instant::now();
+                continue;
+            }
+            let event_result = match self {
                 App::Paused { mode } => mode.handle_events()?,
             };
 
-            match handle_event_result {
-                super::app_mode::HandleEventResult::Ok => todo!(),
-                super::app_mode::HandleEventResult::Exit => break,
+            match event_result {
+                ContinuationResult::Ok => continue,
+                ContinuationResult::Exit => break,
             }
         }
+
         Ok(())
     }
 
@@ -46,6 +71,3 @@ impl Widget for &App {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {}

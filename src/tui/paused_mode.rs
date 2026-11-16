@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
@@ -8,12 +10,20 @@ use ratatui::{
     widgets::{Block, Paragraph, Widget},
 };
 
-use crate::tui::app_mode::{AppMode, HandleEventResult};
+use crate::tui::app_mode::{AppMode, ContinuationResult};
 
-#[derive(Debug, Default)]
-pub struct PausedMode {}
+#[derive(Debug)]
+pub struct PausedMode {
+    start: Instant,
+}
 
 impl PausedMode {
+    pub fn new() -> Self {
+        Self {
+            start: Instant::now(),
+        }
+    }
+
     fn instructions(&self) -> Line<'_> {
         let instructions = Line::from(vec![
             " Decrement ".into(),
@@ -26,10 +36,10 @@ impl PausedMode {
         Line::from_iter(instructions)
     }
 
-    pub(crate) fn handle_key_event(&mut self, key_event: KeyEvent) -> HandleEventResult {
+    pub(crate) fn handle_key_event(&mut self, key_event: KeyEvent) -> ContinuationResult {
         match key_event.code {
-            KeyCode::Char('q') => HandleEventResult::Exit,
-            _ => HandleEventResult::Ok,
+            KeyCode::Char('q') => ContinuationResult::Exit,
+            _ => ContinuationResult::Ok,
         }
     }
 }
@@ -52,12 +62,12 @@ impl AppMode for PausedMode {
             .render(area, buf);
     }
 
-    fn handle_events(&mut self) -> std::io::Result<HandleEventResult> {
+    fn handle_events(&mut self) -> std::io::Result<ContinuationResult> {
         let handle_event_return = match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
                 self.handle_key_event(key_event)
             }
-            _ => HandleEventResult::Ok,
+            _ => ContinuationResult::Ok,
         };
         Ok(handle_event_return)
     }
