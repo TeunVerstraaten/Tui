@@ -2,8 +2,6 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-use crate::schedule::entry;
-
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Entry {
     Simple { name: String, duration: Duration },
@@ -31,7 +29,7 @@ pub fn sequence(entries: Vec<Entry>) -> Entry {
 
 fn tree_print_recursive(first_prefix: &str, second_prefix: &str, entry: &Entry) {
     match entry {
-        Entry::Simple { name, duration } => {
+        Entry::Simple { name, duration: _ } => {
             println!("{} {}", first_prefix, name);
         }
         Entry::Sequence { entries } => {
@@ -42,7 +40,6 @@ fn tree_print_recursive(first_prefix: &str, second_prefix: &str, entry: &Entry) 
                 let (p1, p2) = match (index, n) {
                     (_, 1) => (&format!("{}────", prefix), &format!("{}│   ", prefix)),
                     (0, _) => (&format!("{}┬───", prefix), &format!("{}│   ", prefix)),
-                    // =>   (&format!("{}└───", prefix), &format!("{}    ", prefix)),
                     _ if index + 1 == n => (&format!("{}└───", prefix), &format!("{}│   ", prefix)),
                     _ => (&format!("{}├───", prefix), &format!("{}│   ", prefix)),
                 };
@@ -51,7 +48,10 @@ fn tree_print_recursive(first_prefix: &str, second_prefix: &str, entry: &Entry) 
                 prefix = second_prefix;
             }
         }
-        Entry::Repeat { entry, repeat } => {
+        Entry::Repeat {
+            entry: _,
+            repeat: _,
+        } => {
             todo!();
             // for _ in 0..*repeat {
             //     tree_print_recursive(depth + 1, entry);

@@ -1,6 +1,6 @@
-use std::{io, time::Duration};
+use std::time::Duration;
 
-use test_project::{schedule::entry::*, tui::app::App};
+use test_project::schedule::entry::*;
 
 fn main() -> anyhow::Result<()> {
     let schedule = sequence(vec![
