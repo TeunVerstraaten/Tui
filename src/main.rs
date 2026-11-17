@@ -10,7 +10,7 @@ fn main() -> anyhow::Result<()> {
             simple("worsdsdasak", Duration::from_secs(40)),
             simple("Hallo", Duration::from_secs(20)),
         ]),
-        sequence(vec![sequence(vec![
+        sequence(vec![ simple("ads", Duration::from_secs(12)),  sequence(vec![
             simple("work", Duration::from_secs(40)),
             simple("worsdsdasak", Duration::from_secs(40)),
             simple("Hallo", Duration::from_secs(20)),

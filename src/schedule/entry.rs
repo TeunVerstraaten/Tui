@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{collections::HashSet, time::Duration};
 
 use serde::{Deserialize, Serialize};
 
@@ -29,8 +29,8 @@ pub fn sequence(entries: Vec<Entry>) -> Entry {
 
 fn tree_print_recursive(first_prefix: &str, second_prefix: &str, entry: &Entry) {
     match entry {
-        Entry::Simple { name, duration: _ } => {
-            println!("{} {}", first_prefix, name);
+        Entry::Simple { name, duration } => {
+            println!("{} {} ({}s)", first_prefix, name, duration.as_secs());
         }
         Entry::Sequence { entries } => {
             let mut prefix = first_prefix;
@@ -40,7 +40,7 @@ fn tree_print_recursive(first_prefix: &str, second_prefix: &str, entry: &Entry) 
                 let (p1, p2) = match (index, n) {
                     (_, 1) => (&format!("{}────", prefix), &format!("{}│   ", prefix)),
                     (0, _) => (&format!("{}┬───", prefix), &format!("{}│   ", prefix)),
-                    _ if index + 1 == n => (&format!("{}└───", prefix), &format!("{}│   ", prefix)),
+                    _ if index + 1 == n => (&format!("{}└───", prefix), &format!("{}    ", prefix)),
                     _ => (&format!("{}├───", prefix), &format!("{}│   ", prefix)),
                 };
 
@@ -60,6 +60,31 @@ fn tree_print_recursive(first_prefix: &str, second_prefix: &str, entry: &Entry) 
         }
     };
 }
+
+// fn tree_print_recursive(depth: usize, bars: &mut HashSet<usize>, entry: &Entry) {
+//     match entry {
+//         Entry::Simple { name, duration } => {
+//             let line = " ".repeat(depth * 4)
+//
+//             // println!("{} {} ({}s)", first_prefix, name, duration.as_secs());
+//         }
+//         Entry::Sequence { entries } => {
+//             for entry in entries {
+//                 bars.insert(depth);
+//             }
+//         }
+//         Entry::Repeat {
+//             entry: _,
+//             repeat: _,
+//         } => {
+//             println!("{:.<5}", 12);
+//             todo!();
+//             // for _ in 0..*repeat {
+//             //     tree_print_recursive(depth + 1, entry);
+//             // }
+//         }
+//     };
+// }
 
 pub fn tree_print(entry: &Entry) {
     tree_print_recursive("", "", entry);
