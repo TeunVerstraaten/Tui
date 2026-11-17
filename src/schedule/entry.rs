@@ -41,6 +41,7 @@ pub fn sequence(entries: Vec<Entry>) -> Entry {
 }
 
 fn tree_print_recursive(
+    start: &mut Duration,
     first_prefix: &str,
     second_prefix: &str,
     entry: &Entry,
@@ -48,8 +49,15 @@ fn tree_print_recursive(
 ) {
     match entry {
         Entry::Simple { name, duration, .. } => {
-            let line = format!("{} {} ({}s)", first_prefix, name, duration.as_secs());
+            let line = format!(
+                "{: <8} {} {} ({}s)",
+                format!("({}:{:0<2})", start.as_secs() / 60, start.as_secs() % 60),
+                first_prefix,
+                name,
+                duration.as_secs(),
+            );
             lines.push(Line::from(line));
+            *start += *duration;
         }
         Entry::Sequence { entries } => {
             let mut prefix = first_prefix;
@@ -66,12 +74,13 @@ fn tree_print_recursive(
                     _ => (&format!("{}├───", prefix), &format!("{}│   ", prefix)),
                 };
 
-                tree_print_recursive(p1, p2, entry, lines);
+                tree_print_recursive(start, p1, p2, entry, lines);
                 prefix = second_prefix;
             }
         }
         Entry::Repeat { entry, repeat } => {
             tree_print_recursive(
+                start,
                 &format!("{}{:─<4}", first_prefix, repeat.to_string() + "x "),
                 &format!("{}    ", second_prefix),
                 entry,
@@ -83,7 +92,7 @@ fn tree_print_recursive(
 
 pub fn tree_print(entry: &Entry) -> Vec<Line<'static>> {
     let mut lines = vec![];
-    tree_print_recursive("", "", entry, &mut lines);
+    tree_print_recursive(&mut Duration::from_secs(0), "", "", entry, &mut lines);
     return lines;
 }
 
