@@ -52,6 +52,7 @@ fn tree_print_recursive(first_prefix: &str, second_prefix: &str, entry: &Entry) 
             entry: _,
             repeat: _,
         } => {
+            println!("{:.<5}", 12);
             todo!();
             // for _ in 0..*repeat {
             //     tree_print_recursive(depth + 1, entry);
