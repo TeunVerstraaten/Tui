@@ -42,11 +42,12 @@ mod tests {
         let schedule = repeated(
             sequence(vec![
                 simple("work", Duration::from_secs(40)),
-                simple("pause", Duration::from_secs(40)),
+                simple("pause", Duration::from_secs(20)),
             ]),
             3,
         );
 
-        println!("{:?}", serde_json::to_string(schedule).unwrap());
+        println!("{}", serde_json::to_string(&schedule).unwrap());
+        assert_eq!(1, 2);
     }
 }
