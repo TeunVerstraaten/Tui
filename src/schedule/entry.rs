@@ -1,3 +1,4 @@
+use ratatui::text::Line;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use uuid::Uuid;
@@ -39,10 +40,16 @@ pub fn sequence(entries: Vec<Entry>) -> Entry {
     Entry::Sequence { entries }
 }
 
-fn tree_print_recursive(first_prefix: &str, second_prefix: &str, entry: &Entry) {
+fn tree_print_recursive(
+    first_prefix: &str,
+    second_prefix: &str,
+    entry: &Entry,
+    lines: &mut Vec<Line<'static>>,
+) {
     match entry {
         Entry::Simple { name, duration, .. } => {
-            println!("{} {} ({}s)", first_prefix, name, duration.as_secs());
+            let line = format!("{} {} ({}s)", first_prefix, name, duration.as_secs());
+            lines.push(Line::from(line));
         }
         Entry::Sequence { entries } => {
             let mut prefix = first_prefix;
@@ -59,7 +66,7 @@ fn tree_print_recursive(first_prefix: &str, second_prefix: &str, entry: &Entry) 
                     _ => (&format!("{}├───", prefix), &format!("{}│   ", prefix)),
                 };
 
-                tree_print_recursive(p1, p2, entry);
+                tree_print_recursive(p1, p2, entry, lines);
                 prefix = second_prefix;
             }
         }
@@ -68,13 +75,16 @@ fn tree_print_recursive(first_prefix: &str, second_prefix: &str, entry: &Entry) 
                 &format!("{}{:─<4}", first_prefix, repeat.to_string() + "x "),
                 &format!("{}    ", second_prefix),
                 entry,
+                lines,
             );
         }
     };
 }
 
-pub fn tree_print(entry: &Entry) {
-    tree_print_recursive("", "", entry);
+pub fn tree_print(entry: &Entry) -> Vec<Line<'static>> {
+    let mut lines = vec![];
+    tree_print_recursive("", "", entry, &mut lines);
+    return lines;
 }
 
 pub fn test_schedule() -> Entry {
