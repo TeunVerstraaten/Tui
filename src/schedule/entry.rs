@@ -3,34 +3,28 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
-pub enum BasicEntry {
-    Simple { name: String, duration: Duration },
-    Sequence { entries: Vec<BasicEntry> },
-}
-
-#[derive(Debug, Deserialize, Serialize)]
 pub enum Entry {
-    Basic { entry: BasicEntry },
-    Repeated { entry: BasicEntry, repeat: u16 },
+    Simple { name: String, duration: Duration },
+    Sequence { entries: Vec<Entry> },
+    Repeat { entry: Box<Entry>, repeat: u16 },
 }
 
-pub fn simple(name: impl Into<String>, duration: Duration) -> BasicEntry {
-    BasicEntry::Simple {
+pub fn simple(name: impl Into<String>, duration: Duration) -> Entry {
+    Entry::Simple {
         name: name.into(),
         duration,
     }
 }
 
-pub fn sequence(entries: Vec<BasicEntry>) -> BasicEntry {
-    BasicEntry::Sequence { entries }
+pub fn repeated(entry: Entry, repeat: u16) -> Entry {
+    Entry::Repeat {
+        entry: Box::new(entry),
+        repeat,
+    }
 }
 
-pub fn basic(entry: BasicEntry) -> Entry {
-    Entry::Basic { entry }
-}
-
-pub fn repeated(entry: BasicEntry, repeat: u16) -> Entry {
-    Entry::Repeated { entry, repeat }
+pub fn sequence(entries: Vec<Entry>) -> Entry {
+    Entry::Sequence { entries }
 }
 
 #[cfg(test)]
