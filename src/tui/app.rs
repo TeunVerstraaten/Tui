@@ -3,14 +3,16 @@ use std::{
     time::{Duration, Instant},
 };
 
+use crate::{
+    schedule::entry::test_schedule,
+    tui::{
+        app_mode::{AppMode, ContinuationResult},
+        paused_mode::PausedMode,
+        stopped_mode::StoppedMode,
+    },
+};
 use crossterm::event;
 use ratatui::{DefaultTerminal, Frame, buffer::Buffer, layout::Rect, widgets::Widget};
-
-use crate::tui::{
-    app_mode::{AppMode, ContinuationResult},
-    paused_mode::PausedMode,
-    stopped_mode::StoppedMode,
-};
 
 #[derive(Debug)]
 pub enum App {
@@ -20,8 +22,8 @@ pub enum App {
 
 impl Default for App {
     fn default() -> Self {
-        App::Stopped {
-            mode: StoppedMode::default(),
+        App::Paused {
+            mode: PausedMode::new(Some(test_schedule())),
         }
     }
 }

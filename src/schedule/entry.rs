@@ -1,4 +1,8 @@
-use ratatui::text::Line;
+use crossterm::style::Stylize;
+use ratatui::{
+    style::Style,
+    text::{Line, Span},
+};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use uuid::Uuid;
@@ -44,12 +48,16 @@ fn tree_print_recursive(
     first_prefix: &str,
     second_prefix: &str,
     entry: &Entry,
-    lines: &mut Vec<Line<'static>>,
+    lines: &mut Vec<Line>,
 ) {
     match entry {
         Entry::Simple { name, duration, .. } => {
-            let line = format!("{} {} ({}s)", first_prefix, name, duration.as_secs(),);
-            lines.push(Line::from(line));
+            let prefix_span = Span::raw(first_prefix.to_owned());
+            let name_spane = Span::styled(
+                format!(" {} ({}s)", name, duration.as_secs()),
+                Style::new().red(),
+            );
+            lines.push(Line::from(vec![prefix_span, name_spane]));
         }
         Entry::Sequence { entries } => {
             let mut prefix = first_prefix;

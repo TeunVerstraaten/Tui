@@ -1,9 +1,12 @@
-use crate::tui::{
-    app::App,
-    app_mode::{AppMode, ContinuationResult},
-    blit::blit_by_scale,
-    glyphs::chars::NUMS,
-    paused_mode::PausedMode,
+use crate::{
+    schedule::entry::Entry,
+    tui::{
+        app::App,
+        app_mode::{AppMode, ContinuationResult},
+        blit::blit_by_scale,
+        glyphs::chars::NUMS,
+        paused_mode::PausedMode,
+    },
 };
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
@@ -19,17 +22,17 @@ use std::time::Instant;
 #[derive(Debug)]
 pub struct StoppedMode {
     _start: Instant,
-}
-
-impl Default for StoppedMode {
-    fn default() -> Self {
-        Self {
-            _start: Instant::now(),
-        }
-    }
+    schedule: Option<Entry>,
 }
 
 impl StoppedMode {
+    pub fn new(schedule: Option<Entry>) -> Self {
+        Self {
+            _start: Instant::now(),
+            schedule,
+        }
+    }
+
     fn instructions(&self) -> Line<'_> {
         Line::from(vec![
             " Start ".into(),
@@ -44,7 +47,7 @@ impl StoppedMode {
             KeyCode::Char('q') | KeyCode::Char('Q') => ContinuationResult::Exit,
             KeyCode::Char(' ') => ContinuationResult::ChangeMode {
                 updated: App::Paused {
-                    mode: PausedMode::default(),
+                    mode: PausedMode::new(self.schedule.take()),
                 },
             },
             _ => ContinuationResult::Noop,
